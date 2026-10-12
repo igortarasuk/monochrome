@@ -2882,7 +2882,16 @@ fn git_sync_changes_for(root: &Path) -> Result<(), String> {
 fn git_range_context_for(root: &Path) -> Result<GitRangeContext, String> {
     let head = git_branch(root).ok_or_else(|| "Not on a branch".to_string())?;
     let remote = git_remote_name(root);
-    let default_branch = git_default_branch(root, remote.as_deref())
+    // A review request targets what the server calls the default branch now,
+    // so ask it, and keep the local record in step for the rest of the app.
+    let live_default = remote
+        .as_deref()
+        .and_then(|remote| git_remote_default_branch(root, remote));
+    if let (Some(remote), Some(branch)) = (&remote, &live_default) {
+        let _ = git_checked(root, &["remote", "set-head", remote, branch]);
+    }
+    let default_branch = live_default
+        .or_else(|| git_default_branch(root, remote.as_deref()))
         .ok_or_else(|| "Could not resolve the default branch".to_string())?;
     let base_ref = match &remote {
         Some(remote)
@@ -5033,6 +5042,18 @@ fn git_default_branch(root: &Path, remote: Option<&str>) -> Option<String> {
         }
     }
     None
+}
+
+/// The branch the remote's HEAD points at right now. The local
+/// `refs/remotes/<remote>/HEAD` is written at clone time, is missing after
+/// `git remote add`, and goes stale when the default changes on the server.
+fn git_remote_default_branch(root: &Path, remote: &str) -> Option<String> {
+    let listing = git_stdout(root, &["ls-remote", "--symref", remote, "HEAD"])?;
+    listing.lines().find_map(|line| {
+        let target = line.strip_prefix("ref: refs/heads/")?;
+        let name = target.split('\t').next()?.trim();
+        (!name.is_empty()).then(|| name.to_string())
+    })
 }
 
 fn git_ref_exists(root: &Path, spec: &str) -> bool {
@@ -8144,6 +8165,49 @@ mod tests {
         assert_eq!(range.base, "main");
         assert_eq!(range.head, "feature");
         assert!(range.commit_summary.contains("feature work"));
+    }
+
+    #[test]
+    fn git_range_targets_the_remote_default_branch() {
+        let repo = tmp("git-default-repo");
+        let origin = tmp("git-default-origin");
+        if !init_git_commit(&repo.0, &[("a.txt", "alpha\n")]) {
+            return;
+        }
+        if Command::new("git")
+            .args(["init", "--bare"])
+            .current_dir(&origin.0)
+            .status()
+            .map(|status| !status.success())
+            .unwrap_or(true)
+        {
+            return;
+        }
+        let origin_url = origin.0.to_string_lossy().into_owned();
+        if !git(&repo.0, &["remote", "add", "origin", &origin_url])
+            || !git(&repo.0, &["push", "-u", "origin", "main"])
+            || !git(&repo.0, &["checkout", "-b", "deploy"])
+            || !git(&repo.0, &["push", "-u", "origin", "deploy"])
+            || !git(&origin.0, &["symbolic-ref", "HEAD", "refs/heads/deploy"])
+            || !git(&repo.0, &["checkout", "-b", "feature"])
+        {
+            return;
+        }
+        std::fs::write(repo.0.join("a.txt"), "beta\n").unwrap();
+        git_stage_file_for(&repo.0, "a.txt").unwrap();
+        git_commit_for(&repo.0, "feature work").unwrap();
+
+        // No local origin/HEAD: guessing would pick main.
+        let range = git_range_context_for(&repo.0).unwrap();
+        assert_eq!(range.base, "deploy");
+        assert_eq!(
+            git_default_branch(&repo.0, Some("origin")).as_deref(),
+            Some("deploy")
+        );
+
+        // A stale local origin/HEAD loses to the server too.
+        assert!(git(&repo.0, &["remote", "set-head", "origin", "main"]));
+        assert_eq!(git_range_context_for(&repo.0).unwrap().base, "deploy");
     }
 
     #[test]
