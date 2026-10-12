@@ -3229,6 +3229,65 @@ html.theme-light .mono-pill {
   }
 }
 
+/*
+ * A thought in the work trail. It is set in an italic serif, so it never reads
+ * as one of the commands around it, and brighter than the 50% the row asks for.
+ */
+.zen-thought {
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Noto Serif",
+    "DejaVu Serif", Georgia, serif;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: color-mix(in srgb, var(--color-content) 78%, transparent);
+  /* The first paragraph shows over a few lines; a click opens the rest. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+/* While it streams, a band of light crosses the line. */
+.zen-thought-live {
+  background: linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--color-content) 45%, transparent) 35%,
+      var(--color-content) 50%,
+      color-mix(in srgb, var(--color-content) 45%, transparent) 65%
+    )
+    0 0 / 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: zen-thought-sweep 2.2s linear infinite;
+}
+
+@keyframes zen-thought-sweep {
+  from {
+    background-position: 125% 0;
+  }
+  to {
+    background-position: -125% 0;
+  }
+}
+
+/* A shell call in the trail: up to three wrapped lines behind a prompt mark. */
+.zen-command {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding-left: 1.1em;
+  text-indent: -1.1em;
+}
+
+.zen-command::before {
+  content: "$ ";
+  color: color-mix(in srgb, var(--color-content) 40%, transparent);
+}
+
 /* The thinking line breathes while reasoning streams in. */
 .zen-thinking-pulse {
   animation: zen-thinking-pulse 1.8s ease-in-out infinite;
@@ -3253,6 +3312,12 @@ html.theme-light .mono-pill {
   .zen-tool-spin,
   .zen-thinking-pulse {
     animation: none;
+  }
+
+  .zen-thought-live {
+    animation: none;
+    background: none;
+    color: color-mix(in srgb, var(--color-content) 78%, transparent);
   }
 
   .zen-phase-step[data-live]::before,

@@ -74,6 +74,7 @@ import {
 import { copyMessage } from "../../../platform/tauri/clipboard";
 import type { Attachment } from "../model/session";
 import { turnAsksQuestion } from "../model/quickReply";
+import { displayCommand } from "../model/commandLabel";
 import { visibleUserPrompt } from "../../orchestration/model/orchestration";
 import { playCue } from "../../settings/model/sounds";
 import { legacyTaskListFromText } from "../model/taskList";
@@ -4105,6 +4106,9 @@ function ActivityThinkingRow({
   // In a group the rail is the bullet, so there is nothing to breathe while
   // reasoning streams in — the line itself does.
   const pulse = block.streaming ? "zen-thinking-pulse" : "";
+  // Thoughts read apart from the commands around them: their own face, and a
+  // sweep of light while they stream.
+  const thought = `zen-thought ${block.streaming ? "zen-thought-live" : ""}`;
   const icon = bare ? null : (
     <Minus
       className={`size-3.5 shrink-0 text-content/40 ${pulse}`}
@@ -4113,7 +4117,7 @@ function ActivityThinkingRow({
   );
   const label = (
     <span
-      className={`min-w-0 flex-1 truncate font-sans text-sm text-content/50 ${
+      className={`${thought} min-w-0 flex-1 font-sans text-sm text-content/50 ${
         bare ? pulse : ""
       }`}
     >
@@ -4144,7 +4148,7 @@ function ActivityThinkingRow({
       >
         {icon}
         <span
-          className={`min-w-0 flex-1 truncate font-sans text-sm text-content/50 transition-colors duration-200 group-hover:text-content/75 ${
+          className={`${thought} min-w-0 flex-1 font-sans text-sm text-content/50 transition-colors duration-200 group-hover:text-content/75 ${
             bare ? pulse : ""
           }`}
         >
@@ -4261,6 +4265,7 @@ function ActivityToolRow({
       preview={block.tool?.preview}
       cwd={cwd}
       chip={bare}
+      command={block.tool?.kind === "execute"}
       failed={state === "rejected"}
       status={state}
       onOpenFile={onOpenFile}
@@ -4628,6 +4633,7 @@ function ToolCallSummary({
   onOpenDiff,
   interactive = true,
   chip = false,
+  command = false,
   failed = false,
   status = "accepted",
 }: {
@@ -4639,11 +4645,25 @@ function ToolCallSummary({
   interactive?: boolean;
   /** Sets the file off in a chip, for rows that lean on a rail for structure. */
   chip?: boolean;
+  /** A shell call: shown whole over a few lines, behind a prompt mark. */
+  command?: boolean;
   failed?: boolean;
   status?: ToolCallState;
 }) {
   const { action, target, fileName, filePath, isFile, previewMatchesFile } =
     resolveToolCallDisplay(label, preview, cwd);
+  if ((!action || !target) && command && chip) {
+    return (
+      <span
+        className={`zen-command min-w-0 flex-1 font-mono text-[13px] ${
+          failed ? "text-red-400" : "text-content/85"
+        }`}
+        title={label}
+      >
+        {displayCommand(label, cwd)}
+      </span>
+    );
+  }
   if (!action || !target) {
     return (
       <span

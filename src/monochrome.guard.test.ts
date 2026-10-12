@@ -45,6 +45,9 @@ const HOOKS: Record<string, Record<string, string[]>> = {
       '<ReplySaveButton text={text} kind="todo"',
       "Save as to-do",
       "<RemoteControlNotice",
+      "zen-thought",
+      "zen-command",
+      "displayCommand(",
     ],
     "src/features/sessions/ui/AgentTabView.tsx": [
       "assistants/model/replyNotes",
@@ -217,7 +220,12 @@ const HOOKS: Record<string, Record<string, string[]>> = {
   },
   "Linux window and terminal": {
     "src/main.tsx": ["<ResizeEdges", "IS_LINUX"],
-    "src/styles/index.css": ["is-linux", "oled"],
+    "src/styles/index.css": [
+      "is-linux",
+      "oled",
+      ".zen-thought {",
+      ".zen-command {",
+    ],
     "src-tauri/src/pty.rs": [
       ".or_else(passwd_shell)",
       "set_cloexec(master);",

@@ -601,6 +601,10 @@ function isIgnoredTurnBlock(block: Block): boolean {
   // Keep thinking as a step in the group, so a long think does not read as
   // the agent having stalled.
   if (block.role === "reasoning") return !block.text.trim();
+  // Notes Claude wrote to itself were once stored as Remote Control messages.
+  if (block.interjection && /^\s*<task-notification>/.test(block.text)) {
+    return true;
+  }
   return block.role === "assistant" && !block.text.trim();
 }
 
