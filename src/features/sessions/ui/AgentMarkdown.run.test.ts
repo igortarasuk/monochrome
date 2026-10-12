@@ -73,3 +73,21 @@ it("offers Run for an untagged block of ! commands", async () => {
   ]);
   act(() => root.unmount());
 });
+
+it("offers Run for an untagged block of plain commands", async () => {
+  const root = await render(
+    "Push it:\n\n```\ngit push -u origin DEV7-6242-psi-to-omega\n```\n\nTree:\n\n```\nsrc/\n  app/\n```\n",
+  );
+  const buttons = container.querySelectorAll<HTMLButtonElement>(
+    'button[aria-label="Run in terminal"]',
+  );
+  expect(buttons).toHaveLength(1);
+  await act(async () => buttons[0].click());
+  expect(runs).toEqual([
+    {
+      command: "git push -u origin DEV7-6242-psi-to-omega",
+      cwd: "/home/me/app",
+    },
+  ]);
+  act(() => root.unmount());
+});

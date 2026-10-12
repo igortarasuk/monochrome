@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   bangCommand,
   isBangBlock,
+  isCommandBlock,
   isShellLanguage,
   queueTerminalInput,
   shellCommandFromCode,
@@ -35,6 +36,22 @@ describe("run in terminal", () => {
     expect(isBangBlock("! tsh login\nthen wait")).toBe(false);
     expect(isBangBlock("if (!ready) return;")).toBe(false);
     expect(isBangBlock("\n")).toBe(false);
+  });
+
+  it("recognises untagged blocks of well-known commands", () => {
+    expect(isCommandBlock("git push -u origin DEV7-6242-psi-to-omega")).toBe(
+      true,
+    );
+    expect(isCommandBlock("$ sudo systemctl restart nginx\n")).toBe(true);
+    expect(isCommandBlock("NODE_ENV=test npm test")).toBe(true);
+    expect(
+      isCommandBlock("# build\ndocker build \\\n  -t app .\n./run.sh"),
+    ).toBe(true);
+    expect(isCommandBlock("! tsh login")).toBe(true);
+    expect(isCommandBlock("git status\nOn branch main")).toBe(false);
+    expect(isCommandBlock("key = !value")).toBe(false);
+    expect(isCommandBlock("# only a comment")).toBe(false);
+    expect(isCommandBlock("src/\n  app/")).toBe(false);
   });
 
   it("hands queued input to the terminal once", () => {

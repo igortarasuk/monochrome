@@ -57,6 +57,43 @@ export function isBangBlock(code: string): boolean {
   return lines.length > 0 && lines.every((line) => bangCommand(line) !== null);
 }
 
+const COMMON_COMMANDS = new Set(
+  (
+    "git gh glab npm npx pnpm yarn bun deno node python python3 pip pip3 uv " +
+    "cargo rustup go make cmake docker podman kubectl helm terraform ansible " +
+    "ansible-playbook tsh ssh scp rsync curl wget cd ls cat cp mv rm mkdir " +
+    "touch chmod chown ln echo export source grep rg find sed awk tar unzip " +
+    "systemctl journalctl apt apt-get dnf pacman yay brew flatpak snap " +
+    "gcloud aws az claude codex code psql mysql redis-cli openssl kill pkill"
+  ).split(" "),
+);
+
+/**
+ * An untagged block where every line starts with a well-known command, so a
+ * fence the agent forgot to mark as shell still gets a Run button.
+ */
+export function isCommandBlock(code: string): boolean {
+  if (isBangBlock(code)) return true;
+  const lines = code.split(/\r\n?|\n/).filter((line) => line.trim());
+  let continued = false;
+  let commands = 0;
+  for (const line of lines) {
+    const wasContinued = continued;
+    continued = /(\\|\||&&)\s*$/.test(line);
+    if (wasContinued || /^\s*#/.test(line)) continue;
+    const words = line
+      .trim()
+      .replace(/^[$!]\s+/, "")
+      .split(/\s+/);
+    while (words[0] === "sudo" || /^[A-Za-z_]\w*=\S*$/.test(words[0] ?? ""))
+      words.shift();
+    const word = words[0] ?? "";
+    if (!COMMON_COMMANDS.has(word) && !/^\.{1,2}\/\S/.test(word)) return false;
+    commands += 1;
+  }
+  return commands > 0;
+}
+
 /**
  * Commands from a shell block: prompt markers (`$ `, `! `) are removed, and
  * in a console transcript only the prompted lines are commands.
