@@ -1994,6 +1994,26 @@ describe("Remote Control", () => {
     ]);
   });
 
+  it("ignores notes Claude wrote to itself, such as a finished background task", async () => {
+    const note = "<task-notification>\n<task-id>b8w585dom</task-id>\n</task-notification>";
+    const replay = (uuid: string) =>
+      emit({ type: "user", isReplay: true, uuid, origin: { kind: "task-notification" }, message: { role: "user", content: note } });
+    const { events, turn } = await startTurn("s1");
+    replay("note-1");
+    emit({ type: "result", subtype: "success", session_id: "sess_1" });
+    await turn;
+    expect(events.some((event) => event.type === "interjection")).toBe(false);
+
+    const announced: string[] = [];
+    const stop = onRemoteTurn((remote) => announced.push(remote.text));
+    try {
+      replay("note-2");
+      expect(announced).toEqual([]);
+    } finally {
+      stop();
+    }
+  });
+
   it("asks the app to open a turn for a message sent from the phone", async () => {
     const { turn } = await startTurn("s1");
     emit({ type: "result", subtype: "success", session_id: "sess_1" });

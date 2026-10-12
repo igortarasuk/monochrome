@@ -301,10 +301,12 @@ export function buildClaudeSpawnArgs(input: {
 /**
  * A user message Claude echoed back (`--replay-user-messages`): the app's own,
  * recognised by uuid, or one sent from elsewhere through Remote Control.
+ * `synthetic` marks the ones Claude wrote to itself, such as the notification
+ * that a background task finished; nobody typed those.
  */
 export function replayedUserMessage(
   rec: Record<string, unknown>,
-): { uuid?: string; text: string } | null {
+): { uuid?: string; text: string; synthetic: boolean } | null {
   if (stringField(rec, "type") !== "user" || rec.isReplay !== true) {
     return null;
   }
@@ -323,7 +325,12 @@ export function replayedUserMessage(
             .filter(Boolean)
             .join("\n\n")
         : "";
-  return { uuid: stringField(rec, "uuid"), text };
+  const origin = stringField(asRecord(rec.origin), "kind");
+  return {
+    uuid: stringField(rec, "uuid"),
+    text,
+    synthetic: origin !== undefined && origin !== "human",
+  };
 }
 
 export function buildControlRequest(

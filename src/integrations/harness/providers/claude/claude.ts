@@ -1836,9 +1836,10 @@ function writeUserMessage(
 function handleReplayedUser(
   sessionId: string,
   live: Live,
-  replay: { uuid?: string; text: string },
+  replay: { uuid?: string; text: string; synthetic: boolean },
 ): void {
   if (replay.uuid && live.sentUuids.delete(replay.uuid)) return;
+  if (replay.synthetic) return;
   const text = replay.text.trim();
   if (!text) return;
   if (live.activeTurn) {
