@@ -833,8 +833,7 @@ mod tests {
 
     #[test]
     fn pty_descriptors_are_close_on_exec() {
-        let cloexec =
-            |fd: i32| unsafe { libc::fcntl(fd, libc::F_GETFD) } & libc::FD_CLOEXEC != 0;
+        let cloexec = |fd: i32| unsafe { libc::fcntl(fd, libc::F_GETFD) } & libc::FD_CLOEXEC != 0;
         let (master, slave) = open_pty(80, 24).unwrap();
         let copy = dup_fd(master).unwrap();
         let all = cloexec(master) && cloexec(slave) && cloexec(copy);
