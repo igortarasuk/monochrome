@@ -143,6 +143,12 @@ import {
   type TranscriptLayout,
 } from "../model/appearance";
 import {
+  REDUCE_EFFECTS_DEFAULT,
+  applyReduceEffects,
+  loadReduceEffects,
+  saveReduceEffects,
+} from "../model/reduceEffects";
+import {
   pickAndSaveChatBackground,
   removeChatBackground,
 } from "../../projects/model/chatBackground";
@@ -1900,6 +1906,7 @@ function useAppearanceSettings(
     loadThemeDarkLightness,
   );
   const [bodyGlass, setBodyGlass] = useState(loadBodyGlass);
+  const [reduceEffects, setReduceEffects] = useState(loadReduceEffects);
   const [showExcludedFiles, setShowExcludedFiles] = useState(
     loadShowExcludedFiles,
   );
@@ -1971,6 +1978,12 @@ function useAppearanceSettings(
     saveBodyGlass(next);
     setBodyGlass(next);
     if (IS_LINUX) syncNativeGlass(isLightScheme() ? "light" : "dark");
+  }, []);
+
+  const onReduceEffects = useCallback((next: boolean) => {
+    applyReduceEffects(next);
+    saveReduceEffects(next);
+    setReduceEffects(next);
   }, []);
 
   const onShowExcludedFiles = useCallback((next: boolean) => {
@@ -2068,6 +2081,7 @@ function useAppearanceSettings(
     onTint(THEME_HUE_DEFAULT, THEME_SATURATION_DEFAULT);
     onDarkLightness(THEME_DARK_LIGHTNESS_DEFAULT);
     onBodyGlass(BODY_GLASS_DEFAULT);
+    onReduceEffects(REDUCE_EFFECTS_DEFAULT);
     onShowExcludedFiles(SHOW_EXCLUDED_FILES_DEFAULT);
     onChatBackgroundEmptyOpacity(
       Math.round(CHAT_BACKGROUND_EMPTY_OPACITY_DEFAULT * 100),
@@ -2085,6 +2099,7 @@ function useAppearanceSettings(
     chatBackgroundPath,
     onBlur,
     onBodyGlass,
+    onReduceEffects,
     onChatBackgroundEmptyOpacity,
     onChatBackgroundSessionOpacity,
     onChatBackgroundScope,
@@ -2110,6 +2125,7 @@ function useAppearanceSettings(
     themeSaturation,
     themeDarkLightness,
     bodyGlass,
+    reduceEffects,
     showExcludedFiles,
     chatBackgroundPath,
     chatBackgroundEmptyOpacity,
@@ -2128,6 +2144,7 @@ function useAppearanceSettings(
     onTint,
     onDarkLightness,
     onBodyGlass,
+    onReduceEffects,
     onShowExcludedFiles,
     onChooseChatBackground,
     onClearChatBackground,
@@ -2301,6 +2318,17 @@ function AppearancePage({ appearance }: { appearance: AppearanceSettings }) {
             on={appearance.bodyGlass}
             onChange={appearance.onBodyGlass}
             disabled={glassDisabled}
+          />
+        </Row>
+        <Row
+          id="reduce-effects"
+          label="Reduce effects"
+          description="Skip backdrop blur, idle animations and the empty-session games to keep CPU and GPU use low. On by default on Linux."
+        >
+          <Toggle
+            label="Reduce effects"
+            on={appearance.reduceEffects}
+            onChange={appearance.onReduceEffects}
           />
         </Row>
       </Group>

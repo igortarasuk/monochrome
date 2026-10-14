@@ -1,0 +1,116 @@
+/* Low-power mode (Monochrome). Settings → Appearance → Reduce effects adds
+   `reduce-effects` to <html>; it defaults on for Linux. The rules here cost
+   nothing when the class is absent. The first block also fills gaps the
+   OS reduced-motion preference leaves in index.css: loops that keep
+   repainting while an agent works. */
+
+/* A gradient clipped to text repaints the glyphs every frame. Shown static
+   as dimmed text instead, the same way the OS preference treats
+   .zen-thought-live. */
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text,
+  .mascot-active,
+  .mascot-rest,
+  .mascot-talk,
+  .composer-coin-face,
+  .composer-coin-edge,
+  .terminal-live-bar,
+  .agent-chat-typing-dot,
+  .animate-pulse {
+    animation: none !important;
+  }
+
+  .shimmer-text {
+    background-image: none;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    color: color-mix(in srgb, var(--color-content) 60%, transparent);
+  }
+}
+
+html.reduce-effects {
+  --motion-reorder-duration: 0ms;
+  --motion-tab-close-duration: 0ms;
+  --motion-feedback-duration: 0ms;
+  scroll-behavior: auto;
+}
+
+/* Every animation ends on its first frame and every transition is instant.
+   Spinners keep turning: they are the only cue that something is loading,
+   and a transform-only loop is composited rather than repainted. */
+html.reduce-effects *:not(.animate-spin),
+html.reduce-effects *:not(.animate-spin)::before,
+html.reduce-effects *:not(.animate-spin)::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Loops whose base state is wrong once the animation stops. */
+html.reduce-effects .shimmer-text {
+  animation: none !important;
+  background-image: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: color-mix(in srgb, var(--color-content) 60%, transparent);
+}
+
+html.reduce-effects .zen-thought-live {
+  animation: none !important;
+  background: none;
+  color: color-mix(in srgb, var(--color-content) 78%, transparent);
+}
+
+html.reduce-effects .mono-work-ticker-track[data-moving="true"] {
+  animation: none !important;
+  transform: translateY(-24px);
+}
+
+html.reduce-effects .agent-markdown.word-fading [data-word-fade] {
+  animation: none !important;
+  opacity: 1;
+}
+
+/* Decorative canvases and bursts. */
+html.reduce-effects .monocode-sparkles,
+html.reduce-effects .plan-steps,
+html.reduce-effects .orchestrator-constellation,
+html.reduce-effects .btw-burst {
+  display: none;
+}
+
+/* Every backdrop-filter is recomputed on each scroll frame under it, and
+   WebKitGTK does that on the CPU. Panels keep their translucent fill. */
+html.reduce-effects *,
+html.reduce-effects *::before,
+html.reduce-effects *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Popovers and sheets then need an opaque body to stay readable. */
+html.reduce-effects .popover-backdrop {
+  background: var(--color-background-base);
+}
+
+/* The chat background's blurred copies are the most expensive layers of
+   all; the plain image stays. */
+html.reduce-effects .gradient-blur-background {
+  display: none;
+}
+
+/* Compositor layers held open for a drag that is not happening. */
+html.reduce-effects .reorder-item {
+  will-change: auto;
+}
+
+/* Unconditional: a sticky blurred header in stacked diffs re-blurs on every
+   scrolled line. An opaque mix of the same tint reads the same. */
+.diff-sticky-header {
+  background: color-mix(
+    in srgb,
+    var(--color-content) 2%,
+    var(--color-background-base)
+  );
+}

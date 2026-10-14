@@ -1,4 +1,5 @@
 import { WebLinksAddon } from "@xterm/addon-web-links";
+import { WebglAddon } from "@xterm/addon-webgl";
 import { Terminal } from "@xterm/xterm";
 import {
   TERMINAL_COMMAND_DONE_EVENT,
@@ -36,6 +37,23 @@ import {
 } from "../model/terminalLayout";
 import { IS_MAC } from "../../../platform/tauri/platform";
 import "@xterm/xterm/css/xterm.css";
+
+
+/**
+ * The DOM renderer re-lays out every cell on each write; WebGL draws the
+ * grid as one texture. Without WebGL2, or once the context is lost, xterm
+ * falls back to the DOM renderer on its own.
+ */
+function loadWebglRenderer(term: Terminal) {
+  try {
+    if (!document.createElement("canvas").getContext?.("webgl2")) return;
+    const webgl = new WebglAddon();
+    webgl.onContextLoss(() => webgl.dispose());
+    term.loadAddon(webgl);
+  } catch {
+    // No WebGL2 here: the DOM renderer stays.
+  }
+}
 
 type Props = {
   id: string;
@@ -218,7 +236,7 @@ export function TerminalView({ id, cwd, active, onMetaChange }: Props) {
     if (!outer || !host) return;
 
     const term = new Terminal({
-      cursorBlink: true,
+      cursorBlink: false,
       cursorStyle: "bar",
       fontFamily: terminalFont(),
       fontSize: 13,
@@ -233,6 +251,7 @@ export function TerminalView({ id, cwd, active, onMetaChange }: Props) {
     });
     term.loadAddon(new WebLinksAddon((_event, uri) => openTerminalLink(uri)));
     term.open(host);
+    loadWebglRenderer(term);
     termRef.current = term;
     let closed = false;
 

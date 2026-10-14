@@ -329,6 +329,12 @@ export const SETTINGS_INDEX: SettingsEntry[] = [
     keywords: "translucent transparency body window",
   },
   {
+    id: "reduce-effects",
+    section: "appearance",
+    label: "Reduce effects",
+    keywords: "motion animation blur performance cpu battery low power",
+  },
+  {
     id: "interface-scale",
     section: "appearance",
     label: "Interface scale",

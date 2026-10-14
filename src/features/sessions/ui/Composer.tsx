@@ -100,6 +100,10 @@ import { AccessPicker } from "./AccessPicker";
 import { AutoModelToggle } from "../../auto-model/ui/AutoModelToggle";
 import { ProjectKnowledgeButton } from "../../auto-model/ui/ProjectKnowledgeButton";
 import { ComposerRunner } from "./ComposerRunner";
+import {
+  REDUCE_EFFECTS_CHANGE_EVENT,
+  effectsReduced,
+} from "../../settings/model/reduceEffects";
 import { ContextMeter } from "./ContextMeter";
 import { AttachmentChip } from "./AttachmentChip";
 import { BranchPicker } from "../../source-control/ui/BranchPicker";
@@ -512,7 +516,9 @@ export function Composer({
   const [mention, setMention] = useState<MentionToken | null>(null);
   const [mentionActive, setMentionActive] = useState(0);
   const [resendEdited, setResendEdited] = useState(false);
-  const [runnerEnabled, setRunnerEnabled] = useState(loadComposerRunner);
+  const [runnerEnabled, setRunnerEnabled] = useState(
+    () => loadComposerRunner() && !effectsReduced(),
+  );
   const autocorrect = useComposerAutocorrect();
   const [runnerLive, setRunnerLive] = useState(
     () => busy && loadComposerRunner(),
@@ -821,10 +827,14 @@ export function Composer({
     syncHasValue(ref.current?.value ?? "", []);
   }, [harness, syncHasValue]);
   useEffect(() => {
-    const refresh = () => setRunnerEnabled(loadComposerRunner());
+    const refresh = () =>
+      setRunnerEnabled(loadComposerRunner() && !effectsReduced());
     window.addEventListener(COMPOSER_RUNNER_CHANGE_EVENT, refresh);
-    return () =>
+    window.addEventListener(REDUCE_EFFECTS_CHANGE_EVENT, refresh);
+    return () => {
       window.removeEventListener(COMPOSER_RUNNER_CHANGE_EVENT, refresh);
+      window.removeEventListener(REDUCE_EFFECTS_CHANGE_EVENT, refresh);
+    };
   }, []);
 
   useEffect(() => {
@@ -1917,7 +1927,7 @@ export function Composer({
           ref={boxRef}
           data-composer-box
           data-composer-editing={resendEdited ? "" : undefined}
-          className={`relative z-10 border bg-content/3 backdrop-blur-sm ${
+          className={`relative z-10 border bg-content/3 ${
             resendEdited
               ? "edit-last-turn-composer rounded-lg"
               : "rounded-lg border-content/10 has-focus:border-content/20"

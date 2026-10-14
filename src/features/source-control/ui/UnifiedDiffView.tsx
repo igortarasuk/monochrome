@@ -379,7 +379,7 @@ const FileSection = memo(function FileSection({
     >
       <header
         className={`${
-          fileLayout === "stacked" ? "sticky top-0 z-30 backdrop-blur-xl" : ""
+          fileLayout === "stacked" ? "diff-sticky-header sticky top-0 z-30" : ""
         } flex items-center gap-2 bg-content/2 px-3 py-1.5 ${
           fileLayout === "stacked" || expanded
             ? "border-b border-stroke"

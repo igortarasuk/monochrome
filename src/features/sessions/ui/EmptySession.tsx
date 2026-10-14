@@ -11,6 +11,10 @@ import {
   loadGridArcadeEnabled,
   subscribeGridArcadeEnabled,
 } from "../../settings/model/settings";
+import {
+  effectsReduced,
+  subscribeReduceEffects,
+} from "../../settings/model/reduceEffects";
 import { useLockOverscroll } from "../../../shared/hooks/useLockOverscroll";
 import { TerminalGridBackground } from "../../terminal/ui/TerminalGridBackground";
 
@@ -26,6 +30,11 @@ export function EmptySession({ cwd, composer, hasChatBackground }: Props) {
     subscribeGridArcadeEnabled,
     loadGridArcadeEnabled,
     () => true,
+  );
+  const reduced = useSyncExternalStore(
+    subscribeReduceEffects,
+    effectsReduced,
+    () => false,
   );
   const getProjectLabel = () =>
     looksLikeProject(cwd)
@@ -49,7 +58,9 @@ export function EmptySession({ cwd, composer, hasChatBackground }: Props) {
       ref={lockOverscroll}
       className="relative flex h-full min-h-0 overflow-y-auto overscroll-none"
     >
-      {arcadeEnabled && !hasChatBackground ? <TerminalGridBackground /> : null}
+      {arcadeEnabled && !reduced && !hasChatBackground ? (
+        <TerminalGridBackground />
+      ) : null}
       {composer ? (
         // Same box as the docked composer (max-w-4xl, p-1.5), so the input
         // keeps its width when the first message docks it.

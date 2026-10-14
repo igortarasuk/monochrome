@@ -88,7 +88,9 @@ import { isRemoteProjectPath } from "../../projects/model/recents";
 import { runVulnCheck } from "../model/vulnCheck";
 import { VulnCheckStatus } from "./VulnCheckStatus";
 
-const GIT_POLL_MS = 2000;
+// WebKitGTK only reports `document.hidden` for a minimised window, so the
+// poll also asks for focus; a focus event and git activity refresh at once.
+const GIT_POLL_MS = 5000;
 
 function confirmNative(message: string, okLabel?: string): Promise<boolean> {
   return ask(message, {
@@ -1728,7 +1730,10 @@ function useDiffIndex(
     const onResume = () => {
       if (!document.hidden) void load();
     };
-    const timer = window.setInterval(onResume, GIT_POLL_MS);
+    const onPoll = () => {
+      if (!document.hidden && document.hasFocus()) void load();
+    };
+    const timer = window.setInterval(onPoll, GIT_POLL_MS);
     window.addEventListener("focus", onResume);
     document.addEventListener("visibilitychange", onResume);
     const unsubGit = subscribeGitChanged(onResume);

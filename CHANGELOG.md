@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Reduce effects** in Settings → Appearance, on by default on Linux: no backdrop blur, no idle animation loops, instant transitions, and the empty-session games and composer runner stay off.
+
+### Changed
+
+- Stacked diff headers use an opaque tint instead of a live blur, and the composer no longer blurs what is behind it.
+- The Changes panel polls git every 5 s instead of 2 s, and only while the window has focus.
+- The terminal draws with WebGL when available and its cursor no longer blinks.
+
 ## [0.13.0] - 2026-10-12
 
 ### Added

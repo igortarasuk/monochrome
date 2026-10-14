@@ -240,6 +240,35 @@ const HOOKS: Record<string, Record<string, string[]>> = {
     "src-tauri/src/remote_ssh.rs": ["teleport"],
     "host/service.ts": ["linger"],
   },
+  "low power mode": {
+    "src/styles/index.css": ['@import "./low-power.css";'],
+    "src/features/settings/model/appearance.ts": [
+      "applyReduceEffects(loadReduceEffects())",
+    ],
+    "src/features/settings/model/settings.ts": ['id: "reduce-effects"'],
+    "src/features/settings/ui/SettingsView.tsx": [
+      'id="reduce-effects"',
+      "onReduceEffects(REDUCE_EFFECTS_DEFAULT)",
+    ],
+    "src/features/sessions/ui/EmptySession.tsx": [
+      "arcadeEnabled && !reduced",
+    ],
+    "src/features/sessions/ui/Composer.tsx": [
+      "loadComposerRunner() && !effectsReduced()",
+      "REDUCE_EFFECTS_CHANGE_EVENT",
+    ],
+    "src/features/source-control/ui/UnifiedDiffView.tsx": [
+      "diff-sticky-header",
+    ],
+    "src/features/source-control/ui/GitChangesPanel.tsx": [
+      "const GIT_POLL_MS = 5000;",
+      "document.hasFocus()",
+    ],
+    "src/features/terminal/ui/TerminalView.tsx": [
+      "cursorBlink: false",
+      "loadWebglRenderer(term)",
+    ],
+  },
   "updates and branding": {
     "src/app/model/updater.ts": [
       "app_latest_release",
