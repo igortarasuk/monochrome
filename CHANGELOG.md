@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-10-14
+
 ### Added
 
 - **Reduce effects** in Settings → Appearance, on by default on Linux: no backdrop blur, no idle animation loops, instant transitions, and the empty-session games and composer runner stay off.
