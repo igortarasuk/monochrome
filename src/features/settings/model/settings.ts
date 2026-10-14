@@ -452,6 +452,12 @@ export const SETTINGS_INDEX: SettingsEntry[] = [
     keywords: "pretooluse settings.json block command notification",
   },
   {
+    id: "idle-agents",
+    section: "providers",
+    label: "Keep idle agents ready",
+    keywords: "memory ram cpu performance process warm park background",
+  },
+  {
     id: "project-notifications",
     section: "inbox",
     label: "Project notifications",
@@ -1065,12 +1071,40 @@ export function saveClaudeHooks(value: boolean) {
   writeFlag(CLAUDE_HOOKS_KEY, value);
 }
 
+const IDLE_AGENT_LIMIT_KEY = "monocode.idleAgentLimit";
+
+/** How many finished conversations keep their agent CLI warm. */
+export const IDLE_AGENT_LIMITS = [0, 1, 2, 3, 5] as const;
+export type IdleAgentLimit = (typeof IDLE_AGENT_LIMITS)[number];
+export const IDLE_AGENT_LIMIT_DEFAULT: IdleAgentLimit = 3;
+
+export function loadIdleAgentLimit(): IdleAgentLimit {
+  try {
+    const raw = Number(localStorage.getItem(IDLE_AGENT_LIMIT_KEY) ?? NaN);
+    return (
+      IDLE_AGENT_LIMITS.find((limit) => limit === raw) ??
+      IDLE_AGENT_LIMIT_DEFAULT
+    );
+  } catch {
+    return IDLE_AGENT_LIMIT_DEFAULT;
+  }
+}
+
+export function saveIdleAgentLimit(value: IdleAgentLimit) {
+  try {
+    localStorage.setItem(IDLE_AGENT_LIMIT_KEY, String(value));
+  } catch {
+    // private mode / quota
+  }
+}
+
 const CTRL = IS_MAC ? "⌃" : "Ctrl+";
 
 export type KeybindingRow = {
   command: string;
   keys: string;
   when: string;
+  fixed?: true;
 };
 
 /**
@@ -1133,6 +1167,12 @@ export const KEYBINDINGS: KeybindingRow[] = [
     when: "sessionFocus && !overlay",
   },
   {
+    command: "Session: Stop",
+    keys: "Esc",
+    when: "sessionBusy && !terminalFocus",
+    fixed: true,
+  },
+  {
     command: "Session: Previous",
     keys: `${MOD}${SHIFT}↑`,
     when: "!overlay && (!textFocus || emptyComposer)",
@@ -1190,7 +1230,9 @@ export type KeybindingOverride = {
 
 export type KeybindingOverrides = Record<string, KeybindingOverride>;
 
-const VALID_COMMANDS = new Set(KEYBINDINGS.map((row) => row.command));
+const VALID_COMMANDS = new Set(
+  KEYBINDINGS.filter((row) => !row.fixed).map((row) => row.command),
+);
 
 const KEY_CODES: Record<string, string> = {
   " ": "Space",

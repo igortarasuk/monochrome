@@ -122,8 +122,8 @@ const HOOKS: Record<string, Record<string, string[]>> = {
     "src/app/shell/UsageFooter.tsx": [
       "<PipelineChip",
       "hasProjectAccountChoice(",
-      "needsAccountChoice={claudeNeedsChoice}",
-      "needsAccountChoice={codexNeedsChoice}",
+      "needsAccountChoice: claudeNeedsChoice",
+      "needsAccountChoice: codexNeedsChoice",
       "{extra}",
     ],
     "src/app/shell/UsageProviderChip.tsx": ["needsAccountChoice"],

@@ -13,6 +13,34 @@ const COMMENT_DARK = "var(--syntax-comment)";
 const PROPERTY_DARK = "var(--syntax-property)";
 
 describe("highlightSource", () => {
+  it("colors script blocks in Vue and Svelte components", async () => {
+    for (const path of ["App.vue", "Counter.svelte"]) {
+      const language = await languageForPath(path);
+      const lines = highlightSource(
+        '<script>\nconst name = "agent";\n</script>',
+        language,
+        "dark",
+      );
+      expect(token(lines[1], "const")?.color).toBe(KEYWORD_DARK);
+      expect(token(lines[1], '"agent"')?.color).toBe(STRING_DARK);
+    }
+  });
+
+  it.each(["theme.scss", "theme.less"])(
+    "colors comments in %s stylesheets",
+    async (path) => {
+      const language = await languageForPath(path);
+      const lines = highlightSource("// note\na { color: red; }", language, "dark");
+      expect(token(lines[0], "// note")?.color).toBe(COMMENT_DARK);
+    },
+  );
+
+  it("colors declarations in indented Sass stylesheets", async () => {
+    const language = await languageForPath("theme.sass");
+    const lines = highlightSource(".card\n  color: red", language, "dark");
+    expect(token(lines[1], "color")?.color).toBe(PROPERTY_DARK);
+  });
+
   it("colors TypeScript keywords, strings, and comments", () => {
     const lines = highlightSource(
       'const name = "agent";\n// note',
@@ -66,6 +94,14 @@ describe("highlightSource", () => {
     );
     expect(token(lines[0], "name")?.color).toBe(PROPERTY_DARK);
     expect(token(lines[1], "true")?.color).toBe(KEYWORD_DARK);
+  });
+
+  it("colors dotenv keys and leaves values as plain text", async () => {
+    const language = await languageForPath(".env");
+    const lines = highlightSource("# note\nAWS_BUCKET=bucket", language, "dark");
+    expect(token(lines[0], "# note")?.color).toBe(COMMENT_DARK);
+    expect(token(lines[1], "AWS_BUCKET")?.color).toBe("var(--syntax-callable)");
+    expect(token(lines[1], "bucket")?.color).toBeUndefined();
   });
 
   it("leaves unknown languages unstyled", () => {

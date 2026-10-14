@@ -13,6 +13,24 @@ const IMAGE_EXTENSIONS = new Set([
 
 // "%PDF-"
 const PDF_MAGIC = [0x25, 0x50, 0x44, 0x46, 0x2d];
+const VIDEO_MIME_TYPES: Record<string, string> = {
+  ".mp4": "video/mp4",
+  ".m4v": "video/mp4",
+  ".mov": "video/quicktime",
+  ".webm": "video/webm",
+  ".ogv": "video/ogg",
+  ".avi": "video/x-msvideo",
+  ".mkv": "video/x-matroska",
+  ".mpg": "video/mpeg",
+  ".mpeg": "video/mpeg",
+  ".3gp": "video/3gpp",
+  ".3g2": "video/3gpp2",
+};
+
+function extensionOf(path: string): string {
+  const name = basename(path).toLowerCase();
+  return name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
+}
 
 /**
  * Whether a path belongs to the image viewer, decided before anything is read.
@@ -39,6 +57,19 @@ export function isPdfBytes(bytes: Uint8Array): boolean {
     if (startsWith(head.subarray(index), PDF_MAGIC)) return true;
   }
   return false;
+}
+
+/** Route video containers to the player, which checks codec support on load. */
+export function isVideoPath(path: string): boolean {
+  return videoMimeForPath(path) !== null;
+}
+
+/**
+ * Only return explicit video MIME types, so even mislabeled markup cannot
+ * become a document through its blob URL. The media decoder validates bytes.
+ */
+export function videoMimeForPath(path: string): string | null {
+  return VIDEO_MIME_TYPES[extensionOf(path)] ?? null;
 }
 
 /**
@@ -82,11 +113,6 @@ export function formatFileSize(bytes: number): string {
     unit += 1;
   }
   return `${size < 10 ? size.toFixed(1) : Math.round(size)} ${units[unit]}`;
-}
-
-function extensionOf(path: string): string {
-  const name = basename(path).toLowerCase();
-  return name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
 }
 
 function startsWith(bytes: Uint8Array, magic: number[]): boolean {

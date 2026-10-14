@@ -29,11 +29,12 @@ import {
   type Note,
   type NoteUpsert,
 } from "../../notes";
-import type {
-  Artifact,
-  ArtifactCard,
-  ArtifactKind,
-  ArtifactUpsert,
+import {
+  ARTIFACT_KINDS,
+  type Artifact,
+  type ArtifactCard,
+  type ArtifactKind,
+  type ArtifactUpsert,
 } from "../../artifacts/artifacts";
 import type { QuickLaunch } from "../../quick-composer/model/quickComposer";
 import type { Worktree, Worktrees } from "../../source-control/model/worktrees";
@@ -514,7 +515,7 @@ function startLaunch(
   return {
     cwd,
     prompt,
-    ...(host.monoOf?.(source.id)?.showStartedSessionsInSidebar === false
+    ...(host.monoOf?.(source.id)?.showStartedSessionsInSidebar !== true
       ? { sidebarHidden: true }
       : {}),
     ...(draft ? { draft: true } : {}),
@@ -867,8 +868,10 @@ async function handleHabits(
 }
 
 function artifactKind(value: unknown): ArtifactKind {
-  if (value === undefined || value === "document") return "document";
-  throw new Error('Unsupported artifact kind; only "document" is supported');
+  if (value === undefined) return "document";
+  if (ARTIFACT_KINDS.includes(value as ArtifactKind))
+    return value as ArtifactKind;
+  throw new Error('Unsupported artifact kind; use "document" or "html"');
 }
 
 async function handleArtifacts(

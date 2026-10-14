@@ -1,9 +1,11 @@
+import { WebLinksAddon } from "@xterm/addon-web-links";
 import { Terminal } from "@xterm/xterm";
 import {
   TERMINAL_COMMAND_DONE_EVENT,
   scanCommandDone,
   takeTerminalInput,
 } from "../model/runInTerminal";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { useEffect, useRef } from "react";
 import {
   getPtyStatus,
@@ -191,6 +193,15 @@ function oscColors() {
   };
 }
 
+/**
+ * Open an HTTP(S) terminal link in the default browser, ignoring other schemes
+ * and opener failures.
+ */
+function openTerminalLink(uri: string) {
+  if (!/^https?:\/\//i.test(uri)) return;
+  void openUrl(uri).catch(() => undefined);
+}
+
 export function TerminalView({ id, cwd, active, onMetaChange }: Props) {
   const outerRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
@@ -218,7 +229,9 @@ export function TerminalView({ id, cwd, active, onMetaChange }: Props) {
       smoothScrollDuration: 0,
       theme: terminalTheme(isLightScheme()),
       macOptionIsMeta: IS_MAC,
+      linkHandler: { activate: (_event, uri) => openTerminalLink(uri) },
     });
+    term.loadAddon(new WebLinksAddon((_event, uri) => openTerminalLink(uri)));
     term.open(host);
     termRef.current = term;
     let closed = false;

@@ -38,6 +38,7 @@ rebrand() {
   sed -i -e "s/\"productName\": \"[^\"]*\"/\"productName\": \"$BRAND_NAME\"/" \
     -e "s/\"title\": \"MonoCode\"/\"title\": \"$BRAND_NAME\"/" \
     -e "s#frame-src 'none'#frame-src asset: http://asset.localhost https://asset.localhost#g" \
+    -e "s#frame-src monoartifact:#frame-src asset: http://asset.localhost https://asset.localhost monoartifact:#g" \
     "$BRAND_FILE"
 }
 
