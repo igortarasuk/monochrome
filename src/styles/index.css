@@ -3352,15 +3352,12 @@ html.theme-light .mono-pill {
 }
 
 /*
- * A thought in the work trail. It is set in an italic serif, so it never reads
- * as one of the commands around it, and brighter than the 50% the row asks for.
+ * A thought in the work trail. It keeps the interface face and takes a warm
+ * amber, so it never reads as one of the commands around it.
  */
 .zen-thought {
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Noto Serif",
-    "DejaVu Serif", Georgia, serif;
-  font-style: italic;
-  font-size: 0.9rem;
-  color: color-mix(in srgb, var(--color-content) 78%, transparent);
+  --zen-thought: #e5c07b;
+  color: color-mix(in srgb, var(--zen-thought) 88%, transparent);
   /* The first paragraph shows over a few lines; a click opens the rest. */
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -3369,13 +3366,21 @@ html.theme-light .mono-pill {
   overflow-wrap: anywhere;
 }
 
+html.theme-light .zen-thought {
+  --zen-thought: #8a5a00;
+}
+
+.group:hover .zen-thought:not(.zen-thought-live) {
+  color: var(--zen-thought);
+}
+
 /* While it streams, a band of light crosses the line. */
 .zen-thought-live {
   background: linear-gradient(
       100deg,
-      color-mix(in srgb, var(--color-content) 45%, transparent) 35%,
-      var(--color-content) 50%,
-      color-mix(in srgb, var(--color-content) 45%, transparent) 65%
+      color-mix(in srgb, var(--zen-thought) 50%, transparent) 35%,
+      var(--zen-thought) 50%,
+      color-mix(in srgb, var(--zen-thought) 50%, transparent) 65%
     )
     0 0 / 250% 100%;
   -webkit-background-clip: text;
