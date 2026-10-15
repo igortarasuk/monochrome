@@ -46,6 +46,8 @@ import { WindowControls } from "../../../app/shell/WindowControls";
 import { useLockOverscroll } from "../../../shared/hooks/useLockOverscroll";
 import { useTabGroupLogos } from "../../projects/hooks/useTabGroupLogos";
 import { LayaGateSection } from "../../laya/ui/LayaGateSection";
+import { AutomationRetrySection } from "./AutomationRetrySection";
+import { retryRunNote } from "../model/automationRetry";
 import {
   AUTOMATION_WEEKDAYS,
   applyTriggers,
@@ -692,6 +694,7 @@ function RunRow({
   onOpenSession: (sessionId: string) => void | Promise<void>;
 }) {
   const trigger = runTriggerMeta(run, draft);
+  const retryNote = retryRunNote(run);
   const sessionId = run.sessionId;
   return (
     <li>
@@ -717,6 +720,11 @@ function RunRow({
             className="size-3.5 shrink-0 text-content/40"
           />
           <span className="min-w-0 truncate">{trigger.label}</span>
+          {retryNote ? (
+            <span className="shrink-0 text-[11px] text-content/45">
+              {retryNote}
+            </span>
+          ) : null}
         </span>
         <span className="truncate text-content/70">
           {formatAutomationRunAt(run.scheduledFor || run.createdAt)}
@@ -1369,6 +1377,11 @@ function AutomationEditor({
             <LayaGateSection
               gate={draft.gate}
               onChange={(gate) => update("gate", gate)}
+            />
+
+            <AutomationRetrySection
+              retry={draft.retry}
+              onChange={(retry) => update("retry", retry)}
             />
 
             <section>

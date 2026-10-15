@@ -368,6 +368,7 @@ pub fn run() {
             automations::automations_claim_due,
             automations::automations_claim_event,
             automations::automation_run_update,
+            automations::retry::automation_retries_claim_due,
             external_editor::list_external_editors,
             external_editor::open_in_external_editor,
             fs::resolve_project_location,

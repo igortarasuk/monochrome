@@ -201,6 +201,23 @@ const HOOKS: Record<string, Record<string, string[]>> = {
     "src/features/agent-app/model/agentApp.ts": ["laya/model/laya"],
     "src-tauri/src/control_cli.rs": ['"laya'],
   },
+  "Automation retries": {
+    "src/features/automations/ui/AutomationsView.tsx": [
+      "<AutomationRetrySection",
+      "retryRunNote(",
+    ],
+    "src/features/automations/model/automations.ts": [
+      "retry?: AutomationRetry | null;",
+      "retry?: AutomationRunRetry;",
+    ],
+    "src/app/App.tsx": ["claimDueAutomationRetries()"],
+    "src-tauri/src/automations.rs": [
+      "pub(crate) mod retry;",
+      "retry::schedule(",
+      "retry::waiting(",
+    ],
+    "src-tauri/src/lib.rs": ["automation_retries_claim_due"],
+  },
   "editor and file viewer": {
     "src/features/files/ui/FileEditor.tsx": [
       "externalLint(",

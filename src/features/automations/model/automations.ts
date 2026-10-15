@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type { HarnessId, RuntimeMode } from "../../sessions/model/session";
+import type { AutomationRetry, AutomationRunRetry } from "./automationRetry";
 
 export const AUTOMATIONS_CHANGED = "monocode:automations-changed";
 const LOCAL_CHANGED = "monocode:automations-local-changed";
@@ -71,6 +72,8 @@ export type Automation = {
   triggers?: AutomationTrigger[] | null;
   /** Laya pre-check that decides whether a run starts a session. */
   gate?: AutomationGate | null;
+  /** Retries for failed runs; see automationRetry.ts. */
+  retry?: AutomationRetry | null;
   missedRunGraceMinutes: number;
   enabled: boolean;
   nextRunAt: number;
@@ -109,6 +112,7 @@ export type AutomationRun = {
   eventKind?: AutomationTriggerKind;
   event?: string;
   prompt?: string;
+  retry?: AutomationRunRetry;
 };
 
 export type DueAutomationRun = {
@@ -165,6 +169,7 @@ export type AutomationDraft = {
   dayOfWeek: number;
   triggers: AutomationTrigger[];
   gate?: AutomationGate | null;
+  retry?: AutomationRetry | null;
   missedRunGraceMinutes: number;
   enabled: boolean;
 };
@@ -459,6 +464,7 @@ export function draftFromAutomation(automation: Automation): AutomationDraft {
     dayOfWeek: automation.dayOfWeek,
     triggers: automationTriggers(automation),
     gate: automation.gate ?? null,
+    retry: automation.retry ?? null,
     missedRunGraceMinutes: automation.missedRunGraceMinutes,
     enabled: automation.enabled,
   };

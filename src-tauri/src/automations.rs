@@ -7,6 +7,8 @@ use uuid::Uuid;
 
 use crate::session_store::{now_millis, validate_id, SessionStore};
 
+pub(crate) mod retry;
+
 pub(crate) const CHANGED: &str = "monocode:automations-changed";
 
 const MAX_NAME: usize = 200;
@@ -45,6 +47,9 @@ pub struct Automation {
     /// Optional Laya pre-check, opaque JSON owned by the frontend.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     gate: Option<serde_json::Value>,
+    /// Retries for failed runs; see retry.rs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    retry: Option<retry::RetryPolicy>,
     missed_run_grace_minutes: i64,
     enabled: bool,
     next_run_at: i64,
@@ -91,6 +96,8 @@ pub struct AutomationUpsert {
     triggers: Option<Vec<AutomationTrigger>>,
     #[serde(default)]
     gate: Option<serde_json::Value>,
+    #[serde(default)]
+    retry: Option<retry::RetryPolicy>,
     missed_run_grace_minutes: i64,
     #[serde(default = "default_true")]
     enabled: bool,
@@ -122,6 +129,8 @@ pub struct AutomationRun {
     event: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     prompt: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    retry: Option<retry::RunRetry>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -315,6 +324,7 @@ fn validate_upsert(input: &AutomationUpsert, now: i64) -> Result<(), String> {
     {
         return Err("The Laya pre-check is too large.".into());
     }
+    retry::validate(input.retry.as_ref())?;
     if let Some(triggers) = &input.triggers {
         if triggers.len() > MAX_TRIGGERS {
             return Err("Too many automation triggers.".into());
@@ -543,6 +553,7 @@ fn new_run(
         event_kind: None,
         event: None,
         prompt: Some(prompt.to_string()),
+        retry: None,
     }
 }
 
@@ -695,6 +706,7 @@ pub fn automations_upsert(
         day_of_week: automation.day_of_week,
         triggers,
         gate: automation.gate.filter(|gate| gate.is_object()),
+        retry: retry::normalize(automation.retry),
         missed_run_grace_minutes: automation.missed_run_grace_minutes,
         enabled: automation.enabled,
         next_run_at: automation.next_run_at,
@@ -776,6 +788,9 @@ pub fn automation_runs_recover(
     let mut changed_automation_ids = Vec::new();
     for mut run in runs {
         if run.status != "pending" && run.status != "running" {
+            continue;
+        }
+        if retry::waiting(&run) {
             continue;
         }
         let Some(mut automation) = get(&tx, &run.automation_id)? else {
@@ -1008,6 +1023,7 @@ pub fn automation_run_update(
         .map_err(|error| error.to_string())?
         .ok_or_else(|| "Automation run not found.".to_string())?;
     let mut run: AutomationRun = serde_json::from_str(&raw).map_err(|error| error.to_string())?;
+    let already_failed = run.status == "failed";
     run.status = status;
     if run.status == "running" && run.started_at.is_none() {
         run.started_at = Some(now);
@@ -1027,6 +1043,9 @@ pub fn automation_run_update(
     apply_run_summary(&mut automation, &run);
     write_run(&tx, &run)?;
     write_automation(&tx, &automation)?;
+    if !already_failed {
+        retry::schedule(&tx, &automation, &run, now)?;
+    }
     trim_history(&tx, &run.automation_id)?;
     tx.commit().map_err(|error| error.to_string())?;
     drop(conn);
@@ -1069,6 +1088,7 @@ mod tests {
             day_of_week: 1,
             triggers: None,
             gate: None,
+            retry: None,
             missed_run_grace_minutes: 720,
             enabled: true,
             next_run_at: 1,
@@ -1119,6 +1139,7 @@ mod tests {
             day_of_week: 1,
             triggers: None,
             gate: None,
+            retry: None,
             missed_run_grace_minutes: 720,
             enabled: true,
             next_run_at: 1,
@@ -1219,6 +1240,7 @@ mod tests {
                 event_kind: None,
                 event: None,
                 prompt: Some("Run the automation".into()),
+                retry: None,
             };
             write_run(&conn, &run).unwrap();
         }
@@ -1261,6 +1283,7 @@ mod tests {
                 event_kind: None,
                 event: None,
                 prompt: Some("Run the automation".into()),
+                retry: None,
             };
             write_run(&conn, &run).unwrap();
         }

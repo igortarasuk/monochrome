@@ -647,6 +647,7 @@ import {
   ARTIFACT_DELETED_EVENT,
 } from "../features/artifacts/artifacts";
 import type { MonoChangesRequest } from "../features/monos/ui/MonoChangesView";
+import { claimDueAutomationRetries } from "../features/automations/model/automationRetry";
 import {
   claimDueAutomations,
   listAutomations,
@@ -8981,7 +8982,10 @@ function Workspace({
       evaluating = true;
       try {
         await ensureAutomationRecovery();
-        const due = await claimDueAutomations();
+        const due = [
+          ...(await claimDueAutomations()),
+          ...(await claimDueAutomationRetries()),
+        ];
         for (const item of due) {
           if (disposed) break;
           void launchAutomation(item.automation, item.run).catch(
