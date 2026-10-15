@@ -3,18 +3,36 @@ import { endsWithQuestion, turnAsksQuestion } from "./quickReply";
 
 describe("quick reply", () => {
   it("offers answers when the reply closes with a question", () => {
-    expect(endsWithQuestion("Done.\n\nShould I continue with the deploy?")).toBe(
-      true,
-    );
-    expect(endsWithQuestion("Готово.\n\nПродовжити? Якщо так, запущу міграцію.")).toBe(
-      true,
-    );
-    expect(endsWithQuestion("Why did it fail? The token expired.\n\nFixed.")).toBe(
-      false,
-    );
+    expect(
+      endsWithQuestion("Done.\n\nShould I continue with the deploy?"),
+    ).toBe(true);
+    expect(
+      endsWithQuestion("Готово.\n\nПродовжити? Якщо так, запущу міграцію."),
+    ).toBe(true);
+    expect(
+      endsWithQuestion("Why did it fail? The token expired.\n\nFixed."),
+    ).toBe(false);
     expect(endsWithQuestion("Use `a ? b : c` here.")).toBe(false);
     expect(endsWithQuestion("Run:\n\n```sh\ncurl 'x?y=1'\n```")).toBe(false);
     expect(endsWithQuestion("")).toBe(false);
+  });
+
+  it("offers answers when the reply asks to decide without a question mark", () => {
+    expect(
+      endsWithQuestion("Готово.\n\nСкажіть, чи збирати реліз і чи комітити."),
+    ).toBe(true);
+    expect(endsWithQuestion("Дайте знати, чи продовжувати.")).toBe(true);
+    expect(endsWithQuestion("Done.\n\nLet me know if I should commit.")).toBe(
+      true,
+    );
+    expect(endsWithQuestion("Tell me whether to push.")).toBe(true);
+    expect(endsWithQuestion("Скажіть, який пункт брати.")).toBe(false);
+    expect(endsWithQuestion("Тести скажуть більше. Чистий прогін.")).toBe(
+      false,
+    );
+    expect(endsWithQuestion("It will say nothing if the file is empty.")).toBe(
+      false,
+    );
   });
 
   it("reads the last assistant reply of a turn", () => {
@@ -25,8 +43,8 @@ describe("quick reply", () => {
         { id: "t", role: "tool", text: "ls" },
       ]),
     ).toBe(true);
-    expect(
-      turnAsksQuestion([{ id: "u", role: "user", text: "Deploy?" }]),
-    ).toBe(false);
+    expect(turnAsksQuestion([{ id: "u", role: "user", text: "Deploy?" }])).toBe(
+      false,
+    );
   });
 });

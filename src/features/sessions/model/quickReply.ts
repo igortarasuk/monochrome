@@ -12,8 +12,15 @@ export function endsWithQuestion(text: string): boolean {
     .map((part) => part.replace(/`[^`\n]*`/g, "").trim())
     .filter(Boolean);
   const last = paragraphs[paragraphs.length - 1];
-  return !!last && /[?？]/.test(last);
+  return !!last && (/[?？]/.test(last) || ASKS_TO_DECIDE.test(last));
 }
+
+/**
+ * A yes/no question put as a request and closed with a full stop: "Let me know
+ * if I should commit.", "Скажіть, чи комітити."
+ */
+const ASKS_TO_DECIDE =
+  /(?<!\p{L})(?:(?:let me know|tell me|say) (?:if|whether)(?!\p{L})|(?:(?:скаж|напиш|підтверд)(?:іть|и)|дайте знати)(?!\p{L})[^.!]*?(?<!\p{L})чи(?!\p{L}))/iu;
 
 /** The closing reply of a turn, if it ends with a question. */
 export function turnAsksQuestion(turn: Block[]): boolean {
