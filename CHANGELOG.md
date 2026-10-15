@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-10-15
+
+### Added
+
+- **Retries** for failed automation runs: an automation can retry a failed run after a delay, and the run list notes which attempt it is.
+
+### Changed
+
+- Thoughts in the work trail are set in the interface face in amber instead of an italic serif.
+- Quick replies also appear when the agent ends by asking you to decide, not only on a question mark.
+
 ## [0.13.1] - 2026-10-14
 
 ### Added
