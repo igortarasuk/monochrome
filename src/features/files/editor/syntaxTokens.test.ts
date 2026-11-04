@@ -2,15 +2,12 @@ import { javascript } from "@codemirror/lang-javascript";
 import { describe, expect, it } from "vitest";
 import { buildUnifiedFile } from "../../source-control/model/unifiedDiff";
 import { languageForPath } from "./editorLanguage";
-import {
-  highlightDiffFile,
-  highlightSource,
-} from "./syntaxTokens";
+import { highlightDiffFile, highlightSource } from "./syntaxTokens";
 
-const KEYWORD_DARK = "var(--syntax-keyword)";
-const STRING_DARK = "var(--syntax-string)";
-const COMMENT_DARK = "var(--syntax-comment)";
-const PROPERTY_DARK = "var(--syntax-property)";
+const KEYWORD = "var(--syntax-keyword)";
+const STRING = "var(--syntax-string)";
+const COMMENT = "var(--syntax-comment)";
+const PROPERTY = "var(--syntax-property)";
 
 describe("highlightSource", () => {
   it("colors script blocks in Vue and Svelte components", async () => {
@@ -19,10 +16,9 @@ describe("highlightSource", () => {
       const lines = highlightSource(
         '<script>\nconst name = "agent";\n</script>',
         language,
-        "dark",
       );
-      expect(token(lines[1], "const")?.color).toBe(KEYWORD_DARK);
-      expect(token(lines[1], '"agent"')?.color).toBe(STRING_DARK);
+      expect(token(lines[1], "const")?.color).toBe(KEYWORD);
+      expect(token(lines[1], '"agent"')?.color).toBe(STRING);
     }
   });
 
@@ -30,32 +26,31 @@ describe("highlightSource", () => {
     "colors comments in %s stylesheets",
     async (path) => {
       const language = await languageForPath(path);
-      const lines = highlightSource("// note\na { color: red; }", language, "dark");
-      expect(token(lines[0], "// note")?.color).toBe(COMMENT_DARK);
+      const lines = highlightSource("// note\na { color: red; }", language);
+      expect(token(lines[0], "// note")?.color).toBe(COMMENT);
     },
   );
 
   it("colors declarations in indented Sass stylesheets", async () => {
     const language = await languageForPath("theme.sass");
-    const lines = highlightSource(".card\n  color: red", language, "dark");
-    expect(token(lines[1], "color")?.color).toBe(PROPERTY_DARK);
+    const lines = highlightSource(".card\n  color: red", language);
+    expect(token(lines[1], "color")?.color).toBe(PROPERTY);
   });
 
   it("colors TypeScript keywords, strings, and comments", () => {
     const lines = highlightSource(
       'const name = "agent";\n// note',
       javascript({ typescript: true }),
-      "dark",
     );
-    expect(token(lines[0], "const")?.color).toBe(KEYWORD_DARK);
-    expect(token(lines[0], '"agent"')?.color).toBe(STRING_DARK);
-    expect(token(lines[1], "// note")?.color).toBe(COMMENT_DARK);
+    expect(token(lines[0], "const")?.color).toBe(KEYWORD);
+    expect(token(lines[0], '"agent"')?.color).toBe(STRING);
+    expect(token(lines[1], "// note")?.color).toBe(COMMENT);
   });
 
   it("colors comments in JSONC files", async () => {
     const language = await languageForPath("settings.jsonc");
-    const lines = highlightSource('{\n  // note\n  "a": 1\n}', language, "dark");
-    expect(token(lines[1], "// note")?.color).toBe(COMMENT_DARK);
+    const lines = highlightSource('{\n  // note\n  "a": 1\n}', language);
+    expect(token(lines[1], "// note")?.color).toBe(COMMENT);
   });
 
   it("colors Terraform blocks, attributes, strings, and comments", async () => {
@@ -65,12 +60,12 @@ describe("highlightSource", () => {
       language,
       "dark",
     );
-    expect(token(lines[0], "resource")?.color).toBe(KEYWORD_DARK);
-    expect(token(lines[0], '"aws_instance"')?.color).toBe(STRING_DARK);
-    expect(token(lines[1], "ami")?.color).toBe(PROPERTY_DARK);
-    expect(token(lines[1], "var")?.color).toBe(KEYWORD_DARK);
-    expect(token(lines[1], "# note")?.color).toBe(COMMENT_DARK);
-    expect(token(lines[2], "count")?.color).toBe(KEYWORD_DARK);
+    expect(token(lines[0], "resource")?.color).toBe(KEYWORD);
+    expect(token(lines[0], '"aws_instance"')?.color).toBe(STRING);
+    expect(token(lines[1], "ami")?.color).toBe(PROPERTY);
+    expect(token(lines[1], "var")?.color).toBe(KEYWORD);
+    expect(token(lines[1], "# note")?.color).toBe(COMMENT);
+    expect(token(lines[2], "count")?.color).toBe(KEYWORD);
   });
 
   it("colors Jinja tags on top of the templated language", async () => {
@@ -80,9 +75,9 @@ describe("highlightSource", () => {
       language,
       "dark",
     );
-    expect(token(lines[0], "if")?.color).toBe(KEYWORD_DARK);
-    expect(token(lines[1], "name")?.color).toBe(PROPERTY_DARK);
-    expect(token(lines[1], "# note")?.color).toBe(COMMENT_DARK);
+    expect(token(lines[0], "if")?.color).toBe(KEYWORD);
+    expect(token(lines[1], "name")?.color).toBe(PROPERTY);
+    expect(token(lines[1], "# note")?.color).toBe(COMMENT);
   });
 
   it("colors Jinja expressions in Ansible YAML", async () => {
@@ -92,45 +87,35 @@ describe("highlightSource", () => {
       language,
       "dark",
     );
-    expect(token(lines[0], "name")?.color).toBe(PROPERTY_DARK);
-    expect(token(lines[1], "true")?.color).toBe(KEYWORD_DARK);
+    expect(token(lines[0], "name")?.color).toBe(PROPERTY);
+    expect(token(lines[1], "true")?.color).toBe(KEYWORD);
   });
 
   it("colors dotenv keys and leaves values as plain text", async () => {
     const language = await languageForPath(".env");
-    const lines = highlightSource("# note\nAWS_BUCKET=bucket", language, "dark");
-    expect(token(lines[0], "# note")?.color).toBe(COMMENT_DARK);
+    const lines = highlightSource("# note\nAWS_BUCKET=bucket", language);
+    expect(token(lines[0], "# note")?.color).toBe(COMMENT);
     expect(token(lines[1], "AWS_BUCKET")?.color).toBe("var(--syntax-callable)");
     expect(token(lines[1], "bucket")?.color).toBeUndefined();
   });
 
   it("leaves unknown languages unstyled", () => {
-    const lines = highlightSource("plain text", null, "dark");
+    const lines = highlightSource("plain text", null);
     expect(lines).toEqual([[{ text: "plain text" }]]);
   });
 });
 
 describe("highlightDiffFile", () => {
   it("highlights added and deleted lines from each side", async () => {
-    const diff = buildUnifiedFile(
-      "const alpha = 1;\n",
-      "const beta = 1;\n",
-    );
-    const tokens = await highlightDiffFile(
-      {
-        path: "src/lib/settings.ts",
-        blocks: diff.blocks,
-      },
-      "dark",
-    );
+    const diff = buildUnifiedFile("const alpha = 1;\n", "const beta = 1;\n");
+    const tokens = await highlightDiffFile({
+      path: "src/lib/settings.ts",
+      blocks: diff.blocks,
+    });
     const deleted = diff.lines.find((line) => line.kind === "del");
     const added = diff.lines.find((line) => line.kind === "add");
-    expect(deleted && token(tokens.get(deleted), "const")?.color).toBe(
-      KEYWORD_DARK,
-    );
-    expect(added && token(tokens.get(added), "const")?.color).toBe(
-      KEYWORD_DARK,
-    );
+    expect(deleted && token(tokens.get(deleted), "const")?.color).toBe(KEYWORD);
+    expect(added && token(tokens.get(added), "const")?.color).toBe(KEYWORD);
   });
 
   it("skips decorative parsing for a very large diff", async () => {
@@ -140,17 +125,19 @@ describe("highlightDiffFile", () => {
       oldNumber: null,
       newNumber: 1,
     };
-    const tokens = await highlightDiffFile(
-      {
-        path: "large.ts",
-        blocks: [{ kind: "hunk", lines: [line] }],
-      },
-      "dark",
-    );
+    const tokens = await highlightDiffFile({
+      path: "large.ts",
+      blocks: [{ kind: "hunk", lines: [line] }],
+    });
     expect(tokens.size).toBe(0);
   });
 });
 
-function token(line: { text: string; color?: string }[] | undefined, text: string) {
-  return line?.find((piece) => piece.text.includes(text) || piece.text === text);
+function token(
+  line: { text: string; color?: string }[] | undefined,
+  text: string,
+) {
+  return line?.find(
+    (piece) => piece.text.includes(text) || piece.text === text,
+  );
 }

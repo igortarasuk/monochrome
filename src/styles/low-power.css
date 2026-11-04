@@ -104,13 +104,3 @@ html.reduce-effects .gradient-blur-background {
 html.reduce-effects .reorder-item {
   will-change: auto;
 }
-
-/* Unconditional: a sticky blurred header in stacked diffs re-blurs on every
-   scrolled line. An opaque mix of the same tint reads the same. */
-.diff-sticky-header {
-  background: color-mix(
-    in srgb,
-    var(--color-content) 2%,
-    var(--color-background-base)
-  );
-}

@@ -274,9 +274,6 @@ const HOOKS: Record<string, Record<string, string[]>> = {
       "loadComposerRunner() && !effectsReduced()",
       "REDUCE_EFFECTS_CHANGE_EVENT",
     ],
-    "src/features/source-control/ui/UnifiedDiffView.tsx": [
-      "diff-sticky-header",
-    ],
     "src/features/source-control/ui/GitChangesPanel.tsx": [
       "const GIT_POLL_MS = 5000;",
       "document.hasFocus()",

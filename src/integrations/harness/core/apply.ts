@@ -1052,6 +1052,7 @@ function upsertTool(
       kind,
       status,
       ...(detail ? { detail } : {}),
+      ...(!detail && prev.tool?.detailOmitted ? { detailOmitted: true } : {}),
       ...(preview ? { preview } : {}),
       ...(paths ? { paths } : {}),
       ...(prev.tool?.background ? { background: true } : {}),

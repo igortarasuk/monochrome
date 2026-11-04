@@ -1,5 +1,6 @@
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
+import { appendFileSync, closeSync, existsSync, openSync } from "node:fs";
 import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { homedir, userInfo } from "node:os";
 import { join } from "node:path";
@@ -137,6 +138,54 @@ export async function waitForUserBus(
   }
 }
 
+// sd_booted(3): this directory exists only when systemd is the init system.
+// Containers and microVMs such as Firecracker often boot without it.
+export const systemdBooted = (root = "/"): boolean =>
+  existsSync(join(root, "run/systemd/system"));
+
+/**
+ * Starts the host in its own session (setsid), so it outlives the SSH
+ * connection that started it. Nothing restarts it if it exits; every connect
+ * runs `service install` again, which starts it when it is not answering.
+ */
+export function startDetached(options: ServiceOptions, path: string): void {
+  const log = openSync(join(options.directory, "host.log"), "a", 0o600);
+  try {
+    const child = spawn(
+      options.executable,
+      [
+        options.entry,
+        "serve",
+        "--data-dir",
+        options.directory,
+        "--port",
+        String(options.port),
+      ],
+      {
+        detached: true,
+        stdio: ["ignore", log, log],
+        env: { ...process.env, PATH: path },
+      },
+    );
+    // A spawn failure surfaces below as a host that never answers; record why
+    // in host.log, which the startup error points to.
+    child.on("error", (error) => {
+      try {
+        appendFileSync(
+          join(options.directory, "host.log"),
+          `Failed to start host: ${error.message}\n`,
+          { mode: 0o600 },
+        );
+      } catch {
+        /* the startup error still names host.log */
+      }
+    });
+    child.unref();
+  } finally {
+    closeSync(log);
+  }
+}
+
 type Run = (
   command: string,
   args: string[],
@@ -153,6 +202,7 @@ export async function uninstallService(
   system: {
     platform?: NodeJS.Platform;
     home?: string;
+    systemd?: boolean;
     run?: Run;
     powershell?: (script: string) => Promise<unknown>;
   } = {},
@@ -174,6 +224,8 @@ export async function uninstallService(
     });
     return [];
   }
+  // Without systemd nothing was registered; the caller stops the running host.
+  if (platform === "linux" && !(system.systemd ?? systemdBooted())) return [];
   if (platform === "linux") {
     const user = userInfo();
     const env = systemdEnvironment(user.uid);
@@ -245,6 +297,8 @@ export async function installService(
       await writeFile(file, launchAgent(options, path), { mode: 0o600 });
       await run("launchctl", ["bootstrap", domain, file]);
     }
+  } else if (process.platform === "linux" && !systemdBooted()) {
+    startDetached(options, path);
   } else if (process.platform === "linux") {
     const user = userInfo();
     const env = systemdEnvironment(user.uid);
@@ -296,6 +350,8 @@ export async function installService(
   throw new Error(
     process.platform === "win32"
       ? `The host task did not start. Sign in to the Windows desktop as the SSH user and keep that account signed in (locking is fine), then reconnect. Check Task Scheduler and ${join(options.directory, "host.log")}.`
-      : `The host service was installed but did not start. Check ${join(options.directory, "host.log")}.`,
+      : process.platform === "linux" && !systemdBooted()
+        ? `The host did not start. Check ${join(options.directory, "host.log")}.`
+        : `The host service was installed but did not start. Check ${join(options.directory, "host.log")}.`,
   );
 }

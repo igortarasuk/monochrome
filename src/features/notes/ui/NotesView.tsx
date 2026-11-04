@@ -45,6 +45,7 @@ import {
 import { projectKey, projectName } from "../../../shared/lib/paths";
 import { IS_MAC } from "../../../platform/tauri/platform";
 import { looksLikeProject, type RecentProject } from "../../projects/model/recents";
+import { inProjectScope } from "../../projects/model/projectScope";
 import {
   loadTabGroupColors,
   loadTabGroupCustomColors,
@@ -87,18 +88,25 @@ function enqueueNoteSave(
 }
 
 type Props = {
+  tabbed?: boolean;
+  active?: boolean;
   besideRail?: boolean;
   compactRail?: boolean;
   cwd?: string;
+  /** Lists only this project's notes, plus project-less ones. */
+  scopeProject?: string;
   recents: RecentProject[];
   onClose: () => void;
   onToggleSidebar?: () => void;
 };
 
 export function NotesView({
+  tabbed = false,
+  active = true,
   besideRail = false,
   compactRail = false,
   cwd,
+  scopeProject,
   recents,
   onClose,
   onToggleSidebar,
@@ -164,6 +172,7 @@ export function NotesView({
   }, [selectedId]);
 
   useEffect(() => {
+    if (!active) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
@@ -172,15 +181,23 @@ export function NotesView({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [active]);
+
+  const scoped = useMemo(
+    () =>
+      scopeProject
+        ? notes.filter((note) => inProjectScope(note.sourceCwd, scopeProject))
+        : notes,
+    [notes, scopeProject],
+  );
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    const scoped = todoOnly
-      ? notes.filter((note) => note.tags.includes(TODO_TAG))
-      : notes;
-    if (!needle) return scoped;
-    return scoped.filter((note) => {
+    const todos = todoOnly
+      ? scoped.filter((note) => note.tags.includes(TODO_TAG))
+      : scoped;
+    if (!needle) return todos;
+    return todos.filter((note) => {
       const project = noteSourceProject(note.sourceCwd)?.toLowerCase() ?? "";
       return (
         note.title.toLowerCase().includes(needle) ||
@@ -190,12 +207,14 @@ export function NotesView({
         project.includes(needle)
       );
     });
-  }, [notes, query, todoOnly]);
+  }, [scoped, query, todoOnly]);
 
+  // A note from another project stays remembered, but a scoped list opens on
+  // its own first note instead.
   const selected =
     visible.find((note) => note.id === selectedId) ??
-    notes.find((note) => note.id === selectedId) ??
-    null;
+    scoped.find((note) => note.id === selectedId) ??
+    (scopeProject ? (visible[0] ?? null) : null);
 
   const onCreate = async () => {
     if (creating) return;
@@ -348,24 +367,27 @@ export function NotesView({
       data-app-notes
       className="flex min-h-0 min-w-0 flex-1 flex-col text-content"
     >
-      <div
-        className="flex h-10 shrink-0 select-none items-center border-b border-stroke"
-        data-tauri-drag-region="deep"
-      >
-        {IS_MAC && compactRail ? <div className="w-4 shrink-0" /> : null}
-        {IS_MAC && !besideRail ? <div className="w-[78px] shrink-0" /> : null}
-        {besideRail ? null : (
-          <OverlayNav onBack={onClose} onToggleSidebar={onToggleSidebar} />
-        )}
-        <div className="flex min-w-0 flex-1 items-center gap-2 px-3 text-[13px]">
-          <File
-            className="size-3.5 shrink-0 text-content/45"
-            strokeWidth={1.75}
-          />
-          <span className="min-w-0 truncate text-content">Notes</span>
+      {!tabbed ? (
+        <div
+          data-app-view-header
+          className="flex h-10 shrink-0 select-none items-center border-b border-stroke"
+          data-tauri-drag-region="deep"
+        >
+          {IS_MAC && compactRail ? <div className="w-4 shrink-0" /> : null}
+          {IS_MAC && !besideRail ? <div className="w-[78px] shrink-0" /> : null}
+          {besideRail ? null : (
+            <OverlayNav onBack={onClose} onToggleSidebar={onToggleSidebar} />
+          )}
+          <div className="flex min-w-0 flex-1 items-center gap-2 px-3 text-[13px]">
+            <File
+              className="size-3.5 shrink-0 text-content/45"
+              strokeWidth={1.75}
+            />
+            <span className="min-w-0 truncate text-content">Notes</span>
+          </div>
+          {IS_MAC ? null : <WindowControls />}
         </div>
-        {IS_MAC ? null : <WindowControls />}
-      </div>
+      ) : null}
       <div className="flex min-h-0 min-w-0 flex-1">
         {list}
         <NoteDetail

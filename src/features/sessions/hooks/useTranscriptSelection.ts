@@ -6,16 +6,43 @@ import {
 } from "../model/transcriptSelection";
 import { selectionMarkdown } from "../model/selectionMarkdown";
 
-function responseIdForNode(
+function responseForNode(
   node: Node | null,
   root: HTMLElement,
-): string | null {
+): HTMLElement | null {
   const element = node instanceof Element ? node : node?.parentElement;
   const response = element?.closest<HTMLElement>(
     `[${SELECTABLE_AGENT_RESPONSE_ATTR}]`,
   );
-  if (!response || !root.contains(response)) return null;
-  return response.getAttribute(SELECTABLE_AGENT_RESPONSE_ATTR);
+  return response && root.contains(response) ? response : null;
+}
+
+function responseIdForNode(
+  node: Node | null,
+  root: HTMLElement,
+): string | null {
+  return (
+    responseForNode(node, root)?.getAttribute(SELECTABLE_AGENT_RESPONSE_ATTR) ??
+    null
+  );
+}
+
+/**
+ * Selecting a whole paragraph ends the range at the start of the next one.
+ * For a response's last paragraph that is outside the response, usually in
+ * its action row. An end that picks up no text past the response, so the
+ * selected text gains only whitespace, is pulled back to the response's end;
+ * one that reaches into more text is kept and still leaves the response.
+ */
+function clampToResponse(range: Range, root: HTMLElement): Range {
+  const response = responseForNode(range.startContainer, root);
+  if (!response || response.contains(range.endContainer)) return range;
+  const overflow = range.cloneRange();
+  overflow.setStart(response, response.childNodes.length);
+  if (overflow.toString().trim()) return range;
+  const clamped = range.cloneRange();
+  clamped.setEnd(response, response.childNodes.length);
+  return clamped;
 }
 
 function firstRangeRect(range: Range): DOMRect | null {
@@ -60,13 +87,13 @@ export function useTranscriptSelection(
         setSelection(null);
         return;
       }
+      const range = clampToResponse(nativeSelection.getRangeAt(0), root);
       const text = validateTranscriptSelection({
         text: nativeSelection.toString(),
         collapsed: nativeSelection.isCollapsed,
-        anchorResponseId: responseIdForNode(nativeSelection.anchorNode, root),
-        focusResponseId: responseIdForNode(nativeSelection.focusNode, root),
+        anchorResponseId: responseIdForNode(range.startContainer, root),
+        focusResponseId: responseIdForNode(range.endContainer, root),
       });
-      const range = nativeSelection.getRangeAt(0);
       const rect = text ? firstRangeRect(range) : null;
       const markdown = text && rect ? selectionMarkdown(range) : "";
       setSelection(
