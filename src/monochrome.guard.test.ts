@@ -274,6 +274,10 @@ const HOOKS: Record<string, Record<string, string[]>> = {
       "loadComposerRunner() && !effectsReduced()",
       "REDUCE_EFFECTS_CHANGE_EVENT",
     ],
+    "src/styles/low-power.css": [
+      "html .diff-review-file-slot.is-sticky {",
+      "html:root:root [data-composer-box]::before {",
+    ],
     "src/features/source-control/ui/GitChangesPanel.tsx": [
       "const GIT_POLL_MS = 5000;",
       "document.hasFocus()",

@@ -104,3 +104,25 @@ html.reduce-effects .gradient-blur-background {
 html.reduce-effects .reorder-item {
   will-change: auto;
 }
+
+/* Unconditional: a sticky blurred header in stacked diffs re-blurs on every
+   scrolled line. An opaque mix of the same tint reads the same. */
+.diff-sticky-header,
+html .diff-review-file-slot.is-sticky {
+  background: color-mix(
+    in srgb,
+    var(--color-content) 2%,
+    var(--color-background-base)
+  );
+}
+html .diff-review-file-slot.is-sticky.is-expanded {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Unconditional: the composer keeps its tint but does not blur what scrolls
+   behind it. Out-specifies the rules in index.css, which load later. */
+html:root:root [data-composer-box]::before {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}

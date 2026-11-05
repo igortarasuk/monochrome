@@ -16,7 +16,6 @@ import {
   groupTurns,
   hasRunningSubagent,
   joinedTurnStart,
-  initialThinkingIndex,
   lastActivityIndex,
   monoTurnRuns,
   nestedScrollAbsorbsWheel,

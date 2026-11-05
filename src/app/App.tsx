@@ -3059,6 +3059,7 @@ function Workspace({
       setInboxViewOpen(false);
       setNotesViewOpen(false);
       setAutomationsViewOpen(false);
+      setCalendarViewOpen(false);
       const existing = findRemoteSessionTab(
         tabsRef.current,
         sessionsRef.current,
@@ -5285,6 +5286,7 @@ function Workspace({
       setInboxViewOpen(false);
       setNotesViewOpen(false);
       setAutomationsViewOpen(false);
+      setCalendarViewOpen(false);
       if (looksLikeProject(session.cwd))
         setProjectCwd(normalizeProjectPath(session.cwd));
       const linkedUpdate = linkedSessionUpdatesRef.current.get(session.id);
@@ -13003,6 +13005,7 @@ function Workspace({
       setInboxViewOpen(false);
       setNotesViewOpen(false);
       setAutomationsViewOpen(false);
+      setCalendarViewOpen(false);
       activateTab(id);
     },
     [
@@ -14976,21 +14979,22 @@ function Workspace({
                       />
                     </AppViewSurface>
                   ) : null}
-                  {automationsViewOpen && assistantsPane ? (
-                    <AssistantsView
-                      besideRail={
-                        insetLayout || projectRailOpen || compactProjectRail
-                      }
-                      compactRail={!insetLayout && compactRailActive}
-                      history={history}
-                      onClose={onLeaveAutomations}
-                      onToggleSidebar={onToggleSidebar}
-                      onStartChat={startAssistantChat}
-                      onOpenSession={onOpenAutomationSession}
-                    />
-                  ) : automationsViewOpen ||
-                    (insetLayout && openAppViews.includes("automations")) ? (
+                  {automationsViewOpen ||
+                  (insetLayout && openAppViews.includes("automations")) ? (
                     <AppViewSurface active={automationsViewOpen}>
+                      {assistantsPane ? (
+                        <AssistantsView
+                          besideRail={
+                            insetLayout || projectRailOpen || compactProjectRail
+                          }
+                          compactRail={!insetLayout && compactRailActive}
+                          history={history}
+                          onClose={onLeaveAutomations}
+                          onToggleSidebar={onToggleSidebar}
+                          onStartChat={startAssistantChat}
+                          onOpenSession={onOpenAutomationSession}
+                        />
+                      ) : (
                       <AutomationsView
                         tabbed={insetLayout}
                         besideRail={
@@ -15007,6 +15011,7 @@ function Workspace({
                         }
                         onOpenSession={onOpenAutomationSession}
                       />
+                      )}
                     </AppViewSurface>
                   ) : null}
                   {calendarViewOpen ? (

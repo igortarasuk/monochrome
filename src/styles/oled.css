@@ -9,19 +9,6 @@
  * ones they replace.
  */
 
-/* Dark syntax colors, as variables the OLED theme can swap. */
-:root {
-  --syntax-keyword: #ff8ffd;
-  --syntax-callable: #a5d5fe;
-  --syntax-string: #b4fa72;
-  --syntax-type: #ff8272;
-  --syntax-number: #b4fa72;
-  --syntax-comment: #fefdc2;
-  --syntax-property: #d0d1fe;
-  --syntax-meta: #8e8e8e;
-  --syntax-invalid: #ffc4bd;
-}
-
 html.theme-oled {
   --oled-red: rgb(215 0 0);
   --oled-green: rgb(0 215 0);
@@ -53,6 +40,7 @@ html.theme-oled {
   --syntax-callable: var(--oled-yellow);
   --syntax-string: var(--oled-green);
   --syntax-type: var(--oled-red);
+  --syntax-tag: var(--oled-red);
   --syntax-number: var(--oled-yellow);
   --syntax-comment: color-mix(in srgb, var(--color-content) 55%, black);
   --syntax-property: var(--color-content);

@@ -2444,6 +2444,7 @@ function SidebarComponent({
     </SidebarSectionLabel>
   ) : null;
 
+  const assistantsShown = useAssistantsViewShown();
   const navList = inset ? (
     <SidebarNavList
       search={
@@ -2475,8 +2476,20 @@ function SidebarComponent({
         onOpenAutomations && {
           label: "Automations",
           icon: Zap,
-          active: automationsActive,
+          active: automationsActive && !assistantsShown,
           onClick: onOpenAutomations,
+        },
+        {
+          label: "Assistants",
+          icon: Bot,
+          active: assistantsShown,
+          onClick: openAssistantsView,
+        },
+        onOpenCalendar && {
+          label: "Calendar",
+          icon: CalendarDays,
+          active: calendarActive,
+          onClick: onOpenCalendar,
         },
       ]}
     />

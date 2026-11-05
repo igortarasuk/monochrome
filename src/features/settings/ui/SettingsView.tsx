@@ -2529,6 +2529,17 @@ function AppearancePage({ appearance }: { appearance: AppearanceSettings }) {
           />
         </Row>
         <Row
+          id="reduce-effects"
+          label="Reduce effects"
+          description="Skip backdrop blur, idle animations and the empty-session games to keep CPU and GPU use low. On by default on Linux."
+        >
+          <Toggle
+            label="Reduce effects"
+            on={appearance.reduceEffects}
+            onChange={appearance.onReduceEffects}
+          />
+        </Row>
+        <Row
           id="collapsed-project-rail"
           label="Collapsed project rail"
           description="Keep project navigation available as a compact icon rail, or hide the rail completely."
@@ -2567,17 +2578,6 @@ function AppearancePage({ appearance }: { appearance: AppearanceSettings }) {
             label="Show excluded files"
             on={appearance.showExcludedFiles}
             onChange={appearance.onShowExcludedFiles}
-          />
-        </Row>
-        <Row
-          id="reduce-effects"
-          label="Reduce effects"
-          description="Skip backdrop blur, idle animations and the empty-session games to keep CPU and GPU use low. On by default on Linux."
-        >
-          <Toggle
-            label="Reduce effects"
-            on={appearance.reduceEffects}
-            onChange={appearance.onReduceEffects}
           />
         </Row>
       </Group>
